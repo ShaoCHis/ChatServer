@@ -9,25 +9,20 @@ class MySQL
 {
 public:
     // 初始化数据库连接
-    MySQL()
-    {
-    }
+    MySQL();
+
     // 释放数据库连接资源
-    ~MySQL()
-    {
-    }
+    ~MySQL();
+
     // 连接数据库
-    bool connect()
-    {
-    }
+    bool connect();
+
     // 更新操作
-    bool update(std::string sql)
-    {
-    }
+    bool update(std::string sql);
+
     // 查询操作
-    MYSQL_RES *query(std::string sql)
-    {
-    }
+    MYSQL_RES *query(std::string sql);
+    
 
 private:
     MYSQL *
