@@ -8,6 +8,7 @@
 
 #include "json.hpp"
 #include "public.hpp"
+#include "usermodel.hpp"
 
 using json = nlohmann::json;
 using namespace muduo;
@@ -44,6 +45,9 @@ private:
 
     //存储消息id和其对应的业务处理方法
     std::unordered_map<int,MsgHandler> msgHandlerMap_;
+
+    //数据操作类对象
+    UserModel userModel_;
 };
 
 

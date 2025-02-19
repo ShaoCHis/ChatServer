@@ -18,6 +18,14 @@ MySQL::~MySQL()
     if (_conn != nullptr)
         mysql_close(_conn);
 }
+
+//获取连接
+MYSQL* MySQL::getConnection()
+{
+    return _conn;
+}
+
+
 // 连接数据库
 bool MySQL::connect()
 {
@@ -28,6 +36,11 @@ bool MySQL::connect()
         // C 和 C++代码默认的编码字符为ASCII，如果不设置，从MySQL上拉下来的中文显示乱码
         mysql_query(_conn,
                     "set names gbk");
+        LOG_INFO << "connect mysql success!!";
+    }
+    else
+    {
+        LOG_ERROR << "connect mysql fail!!!";
     }
     return p;
 }
