@@ -34,7 +34,7 @@ MsgHandler ChatService::getHandler(int msgid)
     }
 }
 
-//处理登陆业务
+//处理登陆业务  ORM  业务层操作的都是对象   DAO 
 void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
 {
     LOG_INFO << "do login service!!";
@@ -45,6 +45,3 @@ void ChatService::reg(const TcpConnectionPtr &conn, json js, Timestamp time)
 {
     LOG_INFO << "do reg service!!!";
 }
-
-
-
