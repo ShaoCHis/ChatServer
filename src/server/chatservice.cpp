@@ -14,6 +14,31 @@ ChatService::ChatService()
     // 提供一个默认的处理器
 }
 
+// 处理客户端异常退出
+void ChatService::clientCloseException(const TcpConnectionPtr &conn)
+{
+    User user;
+    {
+        std::lock_guard<std::mutex> lock(connMtx_);
+        for (std::unordered_map<int, TcpConnectionPtr>::iterator item = userConnMap_.begin(); item != userConnMap_.end(); item++)
+        {
+            if (item->second == conn)
+            {
+                // 从map表删除用户的连接信息
+                user.setId(item->first);
+                userConnMap_.erase(item);
+                break;
+            }
+        }
+    }
+    if (user.getId() != -1)
+    { 
+        // 更新用户的额状态信息
+        user.setState("offline");
+        userModel_.updateState(user);
+    }
+}
+
 // 获取消息对应的处理器
 MsgHandler ChatService::getHandler(int msgid)
 {
@@ -55,7 +80,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
             {
                 // 登陆成功，记录用户连接信息
                 std::lock_guard<std::mutex> lock(connMtx_);
-                userConnMap_.emplace(user.getId(),conn);
+                userConnMap_.emplace(user.getId(), conn);
             }
             // 登陆成功，更新用户状态信息 state offline => online
             user.setState("online");
