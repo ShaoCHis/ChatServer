@@ -42,8 +42,6 @@ std::vector<std::string> OfflineMsgModel::query(int userid)
     if (mysql.connect())
     {
         MYSQL_RES *res = mysql.query(sql);
-        vec.reserve(res->data->rows);
-        LOG_INFO << "res data counts:" << res->data->rows << " ,vector size:" << vec.size();
         if (res != nullptr)
         {
             // 把userid用户的所有离线消息放入vec中返回
