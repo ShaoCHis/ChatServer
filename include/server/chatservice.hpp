@@ -10,6 +10,7 @@
 #include "json.hpp"
 #include "public.hpp"
 #include "usermodel.hpp"
+#include "offlinemessagemodel.hpp"
 
 using json = nlohmann::json;
 using namespace muduo;
@@ -60,6 +61,9 @@ private:
 
     //数据操作类对象,注意线程安全
     UserModel userModel_;
+
+    //离线消息对象
+    OfflineMsgModel offlineMsgModel_;
 };
 
 
