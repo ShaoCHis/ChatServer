@@ -11,6 +11,7 @@ ChatService::ChatService()
 {
     msgHandlerMap_.insert({EnMsgType::LOGIN_MSG, std::bind(&ChatService::login, this, _1, _2, _3)});
     msgHandlerMap_.insert({EnMsgType::REG_MSG, std::bind(&ChatService::reg, this, _1, _2, _3)});
+    msgHandlerMap_.insert({EnMsgType::ONE_CHAT_MSG, std::bind(&ChatService::oneChat, this, _1, _2, _3)});
     // 提供一个默认的处理器
 }
 
@@ -134,4 +135,22 @@ void ChatService::reg(const TcpConnectionPtr &conn, json js, Timestamp time)
         response["error msg"] = "Register failed!!Please try again later!";
         conn->send(response.dump());
     }
+}
+
+//处理一对一聊天业务
+void ChatService::oneChat(const TcpConnectionPtr &conn, json js, Timestamp time)
+{
+    int toid = js["to"].get<int>();
+    bool userState = false;
+    {
+        std::lock_guard<std::mutex> lock(connMtx_);
+        std::unordered_map<int,TcpConnectionPtr>::iterator item = userConnMap_.find(toid);
+        if(item != userConnMap_.end())
+        {
+            //toid在线，转发消息    服务器主动推送消息给toid用户
+            item->second->send(js.dump());
+            return;
+        }
+    }
+    //toid不在线，存储离线消息
 }

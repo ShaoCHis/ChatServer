@@ -40,6 +40,9 @@ public:
     //处理客户端异常退出
     void clientCloseException(const TcpConnectionPtr &conn);
 
+    //处理一对一聊天业务
+    void oneChat(const TcpConnectionPtr &conn, json js, Timestamp time);
+
     //获取消息对应的处理器
     MsgHandler getHandler(int msgid);
 

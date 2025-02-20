@@ -21,6 +21,8 @@ enum EnMsgType
     LOGIN_MSG_ACK,  //登陆成功
     REG_MSG,        //注册消息
     REG_MSG_ACK,    //注册成功
+    ONE_CHAT_MSG,   //聊天消息
+    
 };
 
 
