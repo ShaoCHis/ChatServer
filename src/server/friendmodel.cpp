@@ -25,9 +25,9 @@ std::vector<User> FriendModel::query(int userId)
     // 1. 组装sql语句
     char sql[1024] = {0};
     //冗余存储一份
-    sprintf(sql, "select a.id,a.name,a.state\\
-                from user a inner join friend b\\
-                on b.friendid=a.id \\
+    sprintf(sql, "select a.id,a.name,a.state\
+                from user a inner join friend b\
+                on b.friendid=a.id \
                 where b.userid = %d", userId);
 
     MySQL mysql;
