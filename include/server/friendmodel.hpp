@@ -12,7 +12,7 @@ class FriendModel
 {
 public:
     //添加好友关系
-    void addFriend(int userId,int friendId);
+    void insert(int userId,int friendId);
 
     //返回用户好友列表  friendId
     std::vector<User> query(int userId);

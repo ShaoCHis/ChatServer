@@ -107,6 +107,23 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
                 //读取该用户的离线消息后，把该用户的所有离线消息删除掉
                 offlineMsgModel_.remove(user.getId());
             }
+
+            //查询该用户的好友信息并返回
+            std::vector<User> friends = friendModel_.query(user.getId());
+            if(!friends.empty())
+            {
+                std::vector<std::string> userVec;
+                for(User user:friends)
+                {
+                    json js;
+                    js["id"] = user.getId();
+                    js["name"] = user.getName();
+                    js["state"] = user.getState();
+                    userVec.emplace_back(js.dump());
+                }
+                response["friends"] = userVec;
+            }
+
             conn->send(response.dump());
         }
     }
@@ -178,6 +195,6 @@ void ChatService::addFriend(const TcpConnectionPtr &conn,json js,Timestamp time)
     int friendId = js["friendid"].get<int>();
 
     //存储好友信息
-    friendModel_.addFriend(userid,friendId);
+    friendModel_.insert(userid,friendId);
 }
 

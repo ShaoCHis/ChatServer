@@ -1,7 +1,7 @@
 #include "friendmodel.hpp"
 
 // 添加好友关系
-void FriendModel::addFriend(int userId, int friendId)
+void FriendModel::insert(int userId, int friendId)
 {
     // 1. 组装sql语句
     char sql[1024] = {0};
