@@ -12,6 +12,7 @@
 #include "usermodel.hpp"
 #include "offlinemessagemodel.hpp"
 #include "friendmodel.hpp"
+#include "groupmodel.hpp"
 
 using json = nlohmann::json;
 using namespace muduo;
@@ -51,6 +52,15 @@ public:
     //服务器异常 业务重置方法
     void reset();
 
+    //创建群组业务
+    void createGroup(const TcpConnectionPtr &conn, json js, Timestamp time);
+
+    //添加群组业务
+    void addGroup(const TcpConnectionPtr &conn, json js, Timestamp time);
+
+    //群聊业务
+    void groupChat(const TcpConnectionPtr &conn, json js, Timestamp time);
+
     //获取消息对应的处理器
     MsgHandler getHandler(int msgid);
 
@@ -74,6 +84,9 @@ private:
 
     //好友操作对象
     FriendModel friendModel_;
+
+    //群组操作对象
+    GroupModel groupModel_;
 };
 
 

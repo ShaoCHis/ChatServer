@@ -55,7 +55,7 @@ public:
         return this->state;
     }
 
-private:
+protected:
     int id;
     std::string name;
     std::string password;

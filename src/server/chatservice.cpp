@@ -13,6 +13,9 @@ ChatService::ChatService()
     msgHandlerMap_.insert({EnMsgType::REG_MSG, std::bind(&ChatService::reg, this, _1, _2, _3)});
     msgHandlerMap_.insert({EnMsgType::ONE_CHAT_MSG, std::bind(&ChatService::oneChat, this, _1, _2, _3)});
     msgHandlerMap_.insert({EnMsgType::ADD_FRIEND_MSG, std::bind(&ChatService::addFriend, this, _1, _2, _3)});
+    msgHandlerMap_.insert({EnMsgType::CREATE_GROUP_MSG, std::bind(&ChatService::createGroup, this, _1, _2, _3)});
+    msgHandlerMap_.insert({EnMsgType::ADD_GROUP_MSG, std::bind(&ChatService::addGroup, this, _1, _2, _3)});
+    msgHandlerMap_.insert({EnMsgType::GROUP_CHAT_MSG, std::bind(&ChatService::groupChat, this, _1, _2, _3)});
     // 提供一个默认的处理器
 }
 
@@ -34,17 +37,17 @@ void ChatService::clientCloseException(const TcpConnectionPtr &conn)
         }
     }
     if (user.getId() != -1)
-    { 
+    {
         // 更新用户的额状态信息
         user.setState("offline");
         userModel_.updateState(user);
     }
 }
 
-//服务器异常，业务重置方法
+// 服务器异常，业务重置方法
 void ChatService::reset()
 {
-    //把online状态的用户，设置成offline
+    // 把online状态的用户，设置成offline
     userModel_.resetState();
 }
 
@@ -100,21 +103,21 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
             response["errno"] = 0;
             response["id"] = user.getId();
             response["name"] = user.getName();
-            //查询该用户是否有离线消息
+            // 查询该用户是否有离线消息
             std::vector<std::string> vec = offlineMsgModel_.query(user.getId());
-            if(!vec.empty())
+            if (!vec.empty())
             {
                 response["offlineMsg"] = vec;
-                //读取该用户的离线消息后，把该用户的所有离线消息删除掉
+                // 读取该用户的离线消息后，把该用户的所有离线消息删除掉
                 offlineMsgModel_.remove(user.getId());
             }
 
-            //查询该用户的好友信息并返回
+            // 查询该用户的好友信息并返回
             std::vector<User> friends = friendModel_.query(user.getId());
-            if(!friends.empty())
+            if (!friends.empty())
             {
                 std::vector<std::string> userVec;
-                for(User user:friends)
+                for (User user : friends)
                 {
                     json js;
                     js["id"] = user.getId();
@@ -170,32 +173,62 @@ void ChatService::reg(const TcpConnectionPtr &conn, json js, Timestamp time)
     }
 }
 
-//处理一对一聊天业务
+// 处理一对一聊天业务
 void ChatService::oneChat(const TcpConnectionPtr &conn, json js, Timestamp time)
 {
     int toid = js["to"].get<int>();
     bool userState = false;
     {
         std::lock_guard<std::mutex> lock(connMtx_);
-        std::unordered_map<int,TcpConnectionPtr>::iterator item = userConnMap_.find(toid);
-        if(item != userConnMap_.end())
+        std::unordered_map<int, TcpConnectionPtr>::iterator item = userConnMap_.find(toid);
+        if (item != userConnMap_.end())
         {
-            //toid在线，转发消息    服务器主动推送消息给toid用户
+            // toid在线，转发消息    服务器主动推送消息给toid用户
             item->second->send(js.dump());
             return;
         }
     }
-    //toid不在线，存储离线消息
-    offlineMsgModel_.insert(toid,js.dump());
+    // toid不在线，存储离线消息
+    offlineMsgModel_.insert(toid, js.dump());
 }
 
-//添加好友业务  msg id friendid
-void ChatService::addFriend(const TcpConnectionPtr &conn,json js,Timestamp time)
+// 添加好友业务  msg id friendid
+void ChatService::addFriend(const TcpConnectionPtr &conn, json js, Timestamp time)
 {
     int userid = js["id"].get<int>();
     int friendId = js["friendid"].get<int>();
 
-    //存储好友信息
-    friendModel_.insert(userid,friendId);
+    // 存储好友信息
+    friendModel_.insert(userid, friendId);
 }
 
+// 创建群组业务  msg groupname groupdesc
+void ChatService::createGroup(const TcpConnectionPtr &conn, json js, Timestamp time)
+{
+    Group group;
+    group.setName(js["groupname"]);
+    group.setDesc(js["groupdesc"]);
+    groupModel_.createGroup(group);
+}
+
+// 添加群组业务  msg,int userid,int groupid,std::string role
+void ChatService::addGroup(const TcpConnectionPtr &conn, json js, Timestamp time)
+{
+    int userid = js["id"].get<int>();
+    int groupid = js["groupid"].get<int>();
+    std::string role = js["role"];
+    groupModel_.addGroup(userid, groupid, role);
+}
+
+// 群聊业务
+void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp time)
+{
+    int groupId = js["groupid"].get<int>();
+    int userId = js["userid"].get<int>();
+    std::string msg = js["msg"];
+    std::vector<int> usersId = groupModel_.queryGroupUsers(userId, groupId);
+    for (int id : usersId)
+    {
+        userConnMap_[id]->send(msg);
+    }
+}
