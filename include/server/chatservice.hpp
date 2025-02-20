@@ -11,6 +11,7 @@
 #include "public.hpp"
 #include "usermodel.hpp"
 #include "offlinemessagemodel.hpp"
+#include "friendmodel.hpp"
 
 using json = nlohmann::json;
 using namespace muduo;
@@ -44,6 +45,12 @@ public:
     //处理一对一聊天业务
     void oneChat(const TcpConnectionPtr &conn, json js, Timestamp time);
 
+    //添加好友业务
+    void addFriend(const TcpConnectionPtr &conn, json js, Timestamp time);
+
+    //服务器异常 业务重置方法
+    void reset();
+
     //获取消息对应的处理器
     MsgHandler getHandler(int msgid);
 
@@ -64,6 +71,9 @@ private:
 
     //离线消息对象
     OfflineMsgModel offlineMsgModel_;
+
+    //好友操作对象
+    FriendModel friendModel_;
 };
 
 

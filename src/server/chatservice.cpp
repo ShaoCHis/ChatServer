@@ -40,6 +40,13 @@ void ChatService::clientCloseException(const TcpConnectionPtr &conn)
     }
 }
 
+//服务器异常，业务重置方法
+void ChatService::reset()
+{
+    //把online状态的用户，设置成offline
+    userModel_.resetState();
+}
+
 // 获取消息对应的处理器
 MsgHandler ChatService::getHandler(int msgid)
 {
@@ -68,7 +75,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
     User user = userModel_.query(id);
     if (user.getId() == id && user.getPassword() == pwd)
     {
-        if (user.getState() == "onlie")
+        if (user.getState() == "online")
         {
             json response;
             response["msgid"] = LOGIN_MSG_ACK;
@@ -163,3 +170,14 @@ void ChatService::oneChat(const TcpConnectionPtr &conn, json js, Timestamp time)
     //toid不在线，存储离线消息
     offlineMsgModel_.insert(toid,js.dump());
 }
+
+//添加好友业务  msg id friendid
+void ChatService::addFriend(const TcpConnectionPtr &conn,json js,Timestamp time)
+{
+    int userid = js["id"].get<int>();
+    int friendId = js["friendid"].get<int>();
+
+    //存储好友信息
+    friendModel_.addFriend(userid,friendId);
+}
+
