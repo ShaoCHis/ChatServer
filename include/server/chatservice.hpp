@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <functional>
 #include <muduo/base/Logging.h>
+#include <mutex>
 
 #include "json.hpp"
 #include "public.hpp"
@@ -46,7 +47,12 @@ private:
     //存储消息id和其对应的业务处理方法
     std::unordered_map<int,MsgHandler> msgHandlerMap_;
 
-    //数据操作类对象
+    //存储在线用户的通信连接
+    std::unordered_map<int,TcpConnectionPtr> userConnMap_;
+    //定义互斥锁，保证userConnMap_的线程安全
+    std::mutex connMtx_;
+
+    //数据操作类对象,注意线程安全
     UserModel userModel_;
 };
 
