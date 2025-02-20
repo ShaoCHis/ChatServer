@@ -38,6 +38,7 @@ std::vector<Group> GroupModel::queryGroups(int userid)
     return groups;
 }
 
+//BUG
 // 根据指定的groupid查询群组用户id列表，除userid自己，主要用户群聊业务给群组其他成员群发消息
 std::vector<int> GroupModel::queryGroupUsers(int userid, int groupid)
 {
@@ -50,12 +51,13 @@ std::vector<int> GroupModel::queryGroupUsers(int userid, int groupid)
     {
         MYSQL_RES *res = mysql.query(sql);
         if (res != nullptr)
-        {
-            MYSQL_ROW row = mysql_fetch_row(res);
-            while (row != nullptr)
+        {       
+            MYSQL_ROW row;
+            while ((row = mysql_fetch_row(res)) != nullptr)
             {
                 usersId.push_back(atoi(row[0]));
             }
+            mysql_free_result(res);
         }
     }
     return usersId;
