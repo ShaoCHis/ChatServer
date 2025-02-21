@@ -35,7 +35,7 @@ void GroupModel::addGroup(int userid, int groupid, std::string role)
 std::vector<Group> GroupModel::queryGroups(int userid)
 {
     char sql[1024] = {0};
-    sprintf(sql, "select n.*\
+    sprintf(sql, "select m.*\
                 from \
                     (select a.*,b.groupname,b.groupdesc \
                     from \
@@ -74,7 +74,11 @@ std::vector<Group> GroupModel::queryGroups(int userid)
             }
         }
     }
-
+    //std::vector<Group> result;
+    for(Group item:result)
+    {
+        item.setUsers(groups[item.getId()]);
+    }
     return result;
 }
 

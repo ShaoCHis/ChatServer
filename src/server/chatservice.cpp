@@ -127,7 +127,15 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
                 }
                 response["friends"] = userVec;
             }
-
+            //拼接群聊名称进行返回显示
+            std::vector<Group> groups = groupModel_.queryGroups(user.getId());
+            auto groupsInfo = [&groups]()->std::string {
+                std::string info;
+                for(Group group:groups){
+                    info+="group:"+group.getName()+";";
+                }
+            };
+            response["groups"] = groupsInfo();
             conn->send(response.dump());
         }
     }
