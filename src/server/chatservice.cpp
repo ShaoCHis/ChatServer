@@ -214,10 +214,16 @@ void ChatService::addFriend(const TcpConnectionPtr &conn, json js, Timestamp tim
 // 创建群组业务  msg groupname groupdesc
 void ChatService::createGroup(const TcpConnectionPtr &conn, json js, Timestamp time)
 {
+    int userid = js["id"].get<int>();
     Group group;
     group.setName(js["groupname"]);
     group.setDesc(js["groupdesc"]);
-    groupModel_.createGroup(group);
+    //存储新创建的群组信息
+    if(groupModel_.createGroup(group))
+    {
+        //存储群组创建人信息
+        groupModel_.addGroup(userid,group.getId(),"creator");
+    }
 }
 
 // 添加群组业务  msg,int userid,int groupid,std::string role
@@ -225,8 +231,7 @@ void ChatService::addGroup(const TcpConnectionPtr &conn, json js, Timestamp time
 {
     int userid = js["id"].get<int>();
     int groupid = js["groupid"].get<int>();
-    std::string role = js["role"];
-    groupModel_.addGroup(userid, groupid, role);
+    groupModel_.addGroup(userid, groupid, "normal");
 }
 
 // 群聊业务
@@ -236,8 +241,19 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp tim
     int userId = js["userid"].get<int>();
     std::string msg = js["msg"];
     std::vector<int> usersId = groupModel_.queryGroupUsers(userId, groupId);
+    
     for (int id : usersId)
     {
-        userConnMap_[id]->send(msg);
+        std::lock_guard<std::mutex> lock(connMtx_);
+        // 用户在线，发送消息
+        if(userConnMap_.find(id)!=userConnMap_.end())
+        {
+            userConnMap_[id]->send(msg);
+        }
+        else
+        {
+            //用户不在线，插入离线消息
+            offlineMsgModel_.insert(id,msg);
+        }
     }
 }

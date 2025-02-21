@@ -10,9 +10,12 @@ bool GroupModel::createGroup(Group &group)
     MySQL mysql;
     if (mysql.connect())
     {
-        // 执行更新操作
-        group.setId(mysql_insert_id(mysql.getConnection()));
-        return mysql.update(sql);
+        if (mysql.update(sql))
+        {
+            // 执行更新操作
+            group.setId(mysql_insert_id(mysql.getConnection()));
+            return true;
+        }
     }
     return false;
 }
@@ -45,7 +48,8 @@ std::vector<Group> GroupModel::queryGroups(int userid)
                     inner join \
                     (select groupid \
                     from groupuser \
-                    where userid=%d) n on m.groupid=n.groupid",userid);
+                    where userid=%d) n on m.groupid=n.groupid",
+            userid);
 
     std::unordered_map<int, std::vector<GroupUser>> groups;
     std::vector<Group> result;
@@ -72,12 +76,13 @@ std::vector<Group> GroupModel::queryGroups(int userid)
                     result.push_back(std::move(Group(groupid, row[5], row[6])));
                 }
             }
+            mysql_free_result(res);
         }
     }
-    //std::vector<Group> result;
-    for(Group item:result)
+    // std::vector<Group> result;
+    for (Group item : result)
     {
-        item.setUsers(groups[item.getId()]);
+        item.setUsers(std::move(groups[item.getId()]));
     }
     return result;
 }
