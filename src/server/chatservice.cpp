@@ -134,6 +134,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
                 for(Group group:groups){
                     info+="group:"+group.getName()+";";
                 }
+                return info;
             };
             response["groups"] = groupsInfo();
             conn->send(response.dump());
