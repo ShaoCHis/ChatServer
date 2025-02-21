@@ -1,4 +1,5 @@
 #include "groupmodel.hpp"
+#include <unordered_map>
 
 // 创建群组
 bool GroupModel::createGroup(Group &group)
@@ -33,12 +34,50 @@ void GroupModel::addGroup(int userid, int groupid, std::string role)
 // 查询用户所在群组信息
 std::vector<Group> GroupModel::queryGroups(int userid)
 {
-    std::vector<Group> groups;
     char sql[1024] = {0};
-    return groups;
+    sprintf(sql, "select n.*\
+                from \
+                    (select a.*,b.groupname,b.groupdesc \
+                    from \
+                        (select a.id,a.name,a.state,b.groupid,b.grouprole \
+                        from user a inner join groupuser b on a.id=b.userid) a \
+                        inner join allgroup b on a.groupid=b.id) m \
+                    inner join \
+                    (select groupid \
+                    from groupuser \
+                    where userid=%d) n on m.groupid=n.groupid",userid);
+
+    std::unordered_map<int, std::vector<GroupUser>> groups;
+    std::vector<Group> result;
+    MySQL mysql;
+    if (mysql.connect())
+    {
+        MYSQL_RES *res = mysql.query(sql);
+        if (res != nullptr)
+        {
+            MYSQL_ROW row;
+            while ((row = mysql_fetch_row(res)) != nullptr)
+            {
+                int groupid = atoi(row[3]);
+                // 添加GroupUser信息
+                if (groups.find(groupid) != groups.end())
+                {
+                    GroupUser groupUser(atoi(row[0]), row[1], row[2], row[4]);
+                    groups[groupid].push_back(std::move(groupUser));
+                }
+                else
+                {
+                    groups.insert({groupid, {std::move(GroupUser(atoi(row[0]), row[1], row[2], row[4]))}});
+                    // 添加Group信息
+                    result.push_back(std::move(Group(groupid, row[5], row[6])));
+                }
+            }
+        }
+    }
+
+    return result;
 }
 
-//BUG
 // 根据指定的groupid查询群组用户id列表，除userid自己，主要用户群聊业务给群组其他成员群发消息
 std::vector<int> GroupModel::queryGroupUsers(int userid, int groupid)
 {
@@ -51,7 +90,7 @@ std::vector<int> GroupModel::queryGroupUsers(int userid, int groupid)
     {
         MYSQL_RES *res = mysql.query(sql);
         if (res != nullptr)
-        {       
+        {
             MYSQL_ROW row;
             while ((row = mysql_fetch_row(res)) != nullptr)
             {
