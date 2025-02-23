@@ -127,14 +127,32 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
                 }
                 response["friends"] = userVec;
             }
-            //拼接群聊名称进行返回显示
+            // 拼接群聊名称进行返回显示
             std::vector<Group> groups = groupModel_.queryGroups(user.getId());
-            auto groupsInfo = [&groups]()->std::string {
-                std::string info;
-                for(Group group:groups){
-                    info+="group:"+group.getName()+";";
+            auto groupsInfo = [&groups]() -> std::vector<std::string>
+            {
+                // group:[{groupid:[xxxx,xxxx,xxx,xxx]}]
+                std::vector<std::string> groupV;
+                for (Group &group : groups)
+                {
+                    json grpjs;
+                    grpjs["id"] = group.getId();
+                    grpjs["groupname"] = group.getName();
+                    grpjs["groupdesc"] = group.getDesc();
+                    std::vector<std::string> userV;
+                    for (GroupUser &user : group.getUsers())
+                    {
+                        json js;
+                        js["id"] = user.getId();
+                        js["name"] = user.getName();
+                        js["state"] = user.getState();
+                        js["role"] = user.getRole();
+                        userV.push_back(js.dump());
+                    }
+                    grpjs["users"] = userV;
+                    groupV.push_back(grpjs.dump());
                 }
-                return info;
+                return groupV;
             };
             response["groups"] = groupsInfo();
             conn->send(response.dump());
@@ -218,11 +236,11 @@ void ChatService::createGroup(const TcpConnectionPtr &conn, json js, Timestamp t
     Group group;
     group.setName(js["groupname"]);
     group.setDesc(js["groupdesc"]);
-    //存储新创建的群组信息
-    if(groupModel_.createGroup(group))
+    // 存储新创建的群组信息
+    if (groupModel_.createGroup(group))
     {
-        //存储群组创建人信息
-        groupModel_.addGroup(userid,group.getId(),"creator");
+        // 存储群组创建人信息
+        groupModel_.addGroup(userid, group.getId(), "creator");
     }
 }
 
@@ -241,19 +259,19 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp tim
     int userId = js["userid"].get<int>();
     std::string msg = js["msg"];
     std::vector<int> usersId = groupModel_.queryGroupUsers(userId, groupId);
-    
+
     for (int id : usersId)
     {
         std::lock_guard<std::mutex> lock(connMtx_);
         // 用户在线，发送消息
-        if(userConnMap_.find(id)!=userConnMap_.end())
+        if (userConnMap_.find(id) != userConnMap_.end())
         {
             userConnMap_[id]->send(msg);
         }
         else
         {
-            //用户不在线，插入离线消息
-            offlineMsgModel_.insert(id,msg);
+            // 用户不在线，插入离线消息
+            offlineMsgModel_.insert(id, msg);
         }
     }
 }
