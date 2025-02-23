@@ -14,7 +14,7 @@
 #include "json.hpp"
 #include "group.hpp"
 #include "user.hpp"
-#include "include/public.hpp"
+#include "public.hpp"
 
 using json = nlohmann::json;
 

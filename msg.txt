@@ -1,0 +1,40 @@
+# 登录消息
+{"msgid":1,"id":13,"password":"123456"}
+
+# 登录消息
+{"msgid":1,"id":23,"password":"123456"}
+
+# 注册消息
+{"msgid":3,"name":"shaochi","password":"123456"}
+
+
+# 发送消息
+{"msgid":5,"id":13,"to":23,"from":"zhang san","msg":"hello2222"}
+
+# 添加好友
+{"msgid":6,"id":13,"friendid":23}
+
+# 创建群组
+{"msgid":7,"id":,"groupname":"test","groupdesc":"this is a test group"}
+
+# 加入群组
+{"msgid":8,"id":13,"groupid":2}
+
+# 群聊天
+{"msgid":9,"userid":23,"groupid":2,"msg":"this is a group test msg"}
+
+select n.*
+    from \
+        (select a.*,b.groupname,b.groupdesc \
+        from \
+            (select a.id,a.name,a.state,b.groupid,b.grouprole \
+            from user a inner join groupuser b on a.id=b.userid) a \
+            inner join allgroup b on a.groupid=b.id) m \
+        inner join \
+        (select groupid \
+        from groupuser \
+        where userid=23) n on m.groupid=n.groupid
+
+select m.* from (select a.*,b.groupname,b.groupdesc from (select a.id,a.name,a.state,b.groupid,b.grouprole from user a inner join groupuser b on a.id=b.userid) a inner join allgroup b on a.groupid=b.id) m inner join (select groupid from groupuser where userid=23) n on m.groupid=n.groupid;
+
+
