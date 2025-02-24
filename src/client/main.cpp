@@ -32,7 +32,7 @@ void readTaskHandler(int clientfd);
 // 获取系统时间 聊天信息需要添加时间信息
 std::string getCurrentTime();
 // 主聊天页面程序
-void mainMenu();
+void mainMenu(int clientfd);
 
 // 聊天客户端程序实现，main线程用作发送线程，子线程用作接收线程
 int main(int argc, char **argv)
