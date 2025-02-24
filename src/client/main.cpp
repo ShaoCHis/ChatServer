@@ -183,16 +183,16 @@ int main(int argc, char **argv)
                             {
                                 json js = json::parse(str);
                                 // [id] + name + " said: " + xxx
-                                std::cout << " [" << js["id"] << "] " 
-                                        << js["name"] << " said: " << js["msg"] << std::endl;
+                                std::cout << " [" << js["id"] << "] "
+                                          << js["name"] << " said: " << js["msg"] << std::endl;
                             }
                         }
 
-                        //登陆成功，启动接收线程负责接收数据
-                        std::thread readTask(readTaskHandler,clientfd);
+                        // 登陆成功，启动接收线程负责接收数据
+                        std::thread readTask(readTaskHandler, clientfd);
                         readTask.detach();
-                        //进入聊天主菜单页面
-                        mainMenu();
+                        // 进入聊天主菜单页面
+                        mainMenu(clientfd);
                     }
                 }
             }
@@ -284,6 +284,24 @@ void showCurrentUserData()
 // 接收线程
 void readTaskHandler(int clientfd)
 {
+    for (;;)
+    {
+        char buffer[1024] = {0};
+        int len = recv(clientfd, buffer, 1024, 0);
+        if (-1 == len || 0 == len)
+        {
+            close(clientfd);
+            exit(-1);
+        }
+
+        // 接收ChatServer转发的数据，反序列化生成json对象
+        json js = json::parse(buffer);
+        if (EnMsgType::ONE_CHAT_MSG == js["msgid"].get<int>())
+        {
+            std::cout << "[" << js["id"] << "]" << js["name"].get<std::string>() << " said: " << js["msg"].get<std::string>() << std::endl;
+            continue;
+        }
+    }
 }
 
 // 获取系统时间 聊天信息需要添加时间信息
@@ -291,7 +309,126 @@ std::string getCurrentTime()
 {
 }
 
+// "help" command handler
+void help(int fd = 0, std::string str = "");
+// "chat" command handler
+void chat(int, std::string);
+// "addfriend" command handler
+void addfriend(int, std::string);
+// "creategroup" command handler
+void creategroup(int, std::string);
+// "addgroup" command handler
+void addgroup(int, std::string);
+// "groupchat" command handler
+void groupchat(int, std::string);
+// "quit" command handler
+void loginout(int, std::string);
+
+// 系统支持的客户端命令列表
+std::unordered_map<std::string, std::string> commandMap = {
+    {"help", "显示所有支持的命令，格式help"},
+    {"chat", "一对一聊天，格式chat:friendid:message"},
+    {"addfriend", "添加好友，格式addfriend:friendid"},
+    {"creategroup", "创建群组，格式creategroup:groupname:groupdesc"},
+    {"addgroup", "加入群组，格式addgroup:groupid"},
+    {"groupchat", "群聊，格式groupchat:groupid:message"},
+    {"loginout", "注销，格式loginout"}};
+
+// 注册系统支持的客户端命令处理
+std::unordered_map<std::string, std::function<void(int, std::string)>> commandHandlerMap = {
+    {"help", help},
+    {"chat", chat},
+    {"addfriend", addfriend},
+    {"creategroup", creategroup},
+    {"addgroup", addgroup},
+    {"groupchat", groupchat},
+    {"loginout", loginout}};
+
 // 主聊天页面程序
-void mainMenu()
+void mainMenu(int clientfd)
 {
+    help();
+
+    char buffer[1024] = {0};
+    for (;;)
+    {
+        std::cin.getline(buffer, 1024);
+        std::string commandbuf(buffer);
+        std::string command; // 存储命令
+        int idx = commandbuf.find(":");
+        if (-1 == idx)
+        {
+            command = commandbuf;
+        }
+        else
+        {
+            command = commandbuf.substr(0, idx);
+        }
+        std::unordered_map<std::string, std::function<void(int, std::string)>>::iterator it = commandHandlerMap.find(command);
+        if (it == commandHandlerMap.end())
+        {
+            std::cerr << "invalid input command!" << std::endl;
+            continue;
+        }
+
+        // 调用相应命令的事件处理回调，mainMenu对修改封闭，添加新功能，不需要修改该函数
+        it->second(clientfd, commandbuf.substr(idx + 1, commandbuf.size() - idx)); // 调用命令处理方法
+    }
+}
+
+// “help" command handler
+void help(int, std::string)
+{
+    std::cout << "show command list>>>>" << std::endl;
+    for (std::pair<const std::string, std::string> &p : commandMap)
+    {
+        std::cout << p.first << " : " << p.second << std::endl;
+    }
+    std::cout << std::endl;
+}
+
+//"addfriend" command handler
+void addfriend(int clientfd, std::string str)
+{
+    int friendid = atoi(str.c_str());
+    json js;
+    js["msgid"] = EnMsgType::ADD_FRIEND_MSG;
+    js["id"] = g_currentUser.getId();
+    js["friendid"] = friendid;
+    std::string buffer = js.dump();
+
+    int len = send(clientfd, buffer.c_str(), strlen(buffer.c_str()) + 1, 0);
+    if (len == -1)
+    {
+        std::cerr << "send addfriend msg error -> " << buffer << std::endl;
+    }
+}
+
+// "chat" command handler
+void chat(int clientfd,std::string str)
+{
+    int idx = str.find(":");
+    if(-1==idx)
+    {
+        std::cerr << "chat command invalid!" << std::endl;
+        return;
+    }
+
+    int friendid = atoi(str.substr(0,idx).c_str());
+    std::string message = str.substr(idx+1,str.size()-idx);
+
+    json js;
+    js["msgid"] = EnMsgType::ONE_CHAT_MSG;
+    js["id"] = g_currentUser.getId();
+    js["name"] = g_currentUser.getName();
+    js["toid"] = friendid;
+    js["msg"] = message;
+    //js["time"] = getCurrentTime();
+
+    std::string buffer = js.dump();
+
+    int len = send(clientfd,buffer.c_str(),strlen(buffer.c_str())+1,0);
+    if(-1==len){
+        std::cerr << "send chat msg error -> " << buffer << std::endl;
+    }
 }
