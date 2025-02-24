@@ -181,7 +181,7 @@ int main(int argc, char **argv)
                             std::vector<std::string> vec = responsejs["offlineMsg"];
                             for (std::string &str : vec)
                             {
-                                json js = json::parse(buffer);
+                                json js = json::parse(str);
                                 if (EnMsgType::ONE_CHAT_MSG == js["msgid"].get<int>())
                                 {
                                     std::cout << js["time"].get<std::string>() << " [" << js["id"] << "]"
@@ -525,7 +525,6 @@ void groupchat(int clientfd, std::string str)
     js["groupid"] = groupid;
     js["msg"] = msg;
     js["time"] = getCurrentTime();
-
     std::string buffer = js.dump();
     int len = send(clientfd, buffer.c_str(), strlen(buffer.c_str()) + 1, 0);
     if (-1 == len)
