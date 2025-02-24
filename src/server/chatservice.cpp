@@ -256,7 +256,7 @@ void ChatService::addGroup(const TcpConnectionPtr &conn, json js, Timestamp time
 void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp time)
 {
     int groupId = js["groupid"].get<int>();
-    int userId = js["userid"].get<int>();
+    int userId = js["id"].get<int>();
     std::vector<int> usersId = groupModel_.queryGroupUsers(userId, groupId);
 
     for (int id : usersId)

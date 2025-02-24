@@ -176,9 +176,9 @@ int main(int argc, char **argv)
                         showCurrentUserData();
 
                         // 显示当前用户的离线消息，个人聊天消息或者群组消息
-                        if (responsejs.contains("offlinemsg"))
+                        if (responsejs.contains("offlineMsg"))
                         {
-                            std::vector<std::string> vec = responsejs["offlinemsg"];
+                            std::vector<std::string> vec = responsejs["offlineMsg"];
                             for (std::string &str : vec)
                             {
                                 json js = json::parse(buffer);
@@ -520,7 +520,7 @@ void groupchat(int clientfd, std::string str)
 
     json js;
     js["msgid"] = EnMsgType::GROUP_CHAT_MSG;
-    js["userid"] = g_currentUser.getId();
+    js["id"] = g_currentUser.getId();
     js["name"] = g_currentUser.getName();
     js["groupid"] = groupid;
     js["msg"] = msg;
