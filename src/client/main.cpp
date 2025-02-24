@@ -26,6 +26,8 @@ std::vector<User> g_currentUserFriendList;
 std::vector<Group> g_currentUserGroupList;
 // 显示当前登陆成功用户的基本信息
 void showCurrentUserData();
+// 控制聊天页面程序
+bool isMainMenuRunning = false;
 
 // 接收线程
 void readTaskHandler(int clientfd);
@@ -198,7 +200,9 @@ int main(int argc, char **argv)
                         // 登陆成功，启动接收线程负责接收数据
                         std::thread readTask(readTaskHandler, clientfd);
                         readTask.detach();
+
                         // 进入聊天主菜单页面
+                        isMainMenuRunning = true;
                         mainMenu(clientfd);
                     }
                 }
@@ -250,6 +254,7 @@ int main(int argc, char **argv)
             break;
         }
         case 3:
+            loginout(clientfd, "loginout");
             close(clientfd);
             exit(0);
         default:
@@ -375,7 +380,7 @@ void mainMenu(int clientfd)
     help();
 
     char buffer[1024] = {0};
-    for (;;)
+    while (isMainMenuRunning)
     {
         std::cin.getline(buffer, 1024);
         std::string commandbuf(buffer);
@@ -536,4 +541,15 @@ void groupchat(int clientfd, std::string str)
 // "quit" command handler   groupid
 void loginout(int clientfd, std::string str)
 {
+    json js;
+    js["msgid"] = EnMsgType::LOGINOUT_MSG;
+    js["id"] = g_currentUser.getId();
+
+    std::string buffer = js.dump();
+    int len = send(clientfd, buffer.c_str(), strlen(buffer.c_str()) + 1, 0);
+    if (-1 == len)
+    {
+        std::cerr << "send loginout msg error -> " << buffer << std::endl;
+    }
+    isMainMenuRunning = false;
 }

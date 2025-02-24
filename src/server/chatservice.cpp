@@ -16,6 +16,7 @@ ChatService::ChatService()
     msgHandlerMap_.insert({EnMsgType::CREATE_GROUP_MSG, std::bind(&ChatService::createGroup, this, _1, _2, _3)});
     msgHandlerMap_.insert({EnMsgType::ADD_GROUP_MSG, std::bind(&ChatService::addGroup, this, _1, _2, _3)});
     msgHandlerMap_.insert({EnMsgType::GROUP_CHAT_MSG, std::bind(&ChatService::groupChat, this, _1, _2, _3)});
+    msgHandlerMap_.insert({EnMsgType::LOGINOUT_MSG, std::bind(&ChatService::loginout, this, _1, _2, _3)});
     // 提供一个默认的处理器
 }
 
@@ -273,4 +274,19 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp tim
             offlineMsgModel_.insert(id, js.dump());
         }
     }
+}
+
+void ChatService::loginout(const TcpConnectionPtr &conn, json js, Timestamp time)
+{
+    int userid = js["id"].get<int>();
+    {
+        std::lock_guard<std::mutex> lock(connMtx_);
+        auto it = userConnMap_.find(userid);
+        if(it!=userConnMap_.end())
+        {
+            userConnMap_.erase(it);
+        }
+    }
+    // 更新用户的额状态信息
+    userModel_.updateState(std::move(User(userid,"","","offline")));
 }
