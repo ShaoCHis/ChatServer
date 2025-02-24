@@ -77,6 +77,10 @@ int main(int argc, char **argv)
     // main线程用于接收用户输入，负责发送数据
     for (;;)
     {
+        // 记录当前登陆用户的好友列表信息
+        g_currentUserFriendList.clear();
+        // 记录当前登陆用户的群组列表信息
+        g_currentUserGroupList.clear();
         // 显示首页面菜单 登陆、注册、退出
         std::cout << "======================" << std::endl;
         std::cout << "1. login" << std::endl;
@@ -113,7 +117,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                char buffer[1024] = {0};
+                char buffer[2048] = {0};
                 len = recv(clientfd, buffer, 1024, 0);
                 if (len == -1)
                 {
@@ -128,6 +132,7 @@ int main(int argc, char **argv)
                     }
                     else // 登陆成功
                     {
+                        std::cout << responsejs.dump() << std::endl;
                         // 记录当前用户的id和name
                         g_currentUser.setId(responsejs["id"].get<int>());
                         g_currentUser.setName(responsejs["name"]);
@@ -197,9 +202,14 @@ int main(int argc, char **argv)
                             }
                         }
 
-                        // 登陆成功，启动接收线程负责接收数据
-                        std::thread readTask(readTaskHandler, clientfd);
-                        readTask.detach();
+                        // 登陆成功，启动接收线程负责接收数据，该线程只启动一次，
+                        static int threadNumber = 0;
+                        if (!threadNumber)
+                        {
+                            threadNumber++;
+                            std::thread readTask(readTaskHandler, clientfd);
+                            readTask.detach();
+                        }
 
                         // 进入聊天主菜单页面
                         isMainMenuRunning = true;
@@ -298,7 +308,7 @@ void readTaskHandler(int clientfd)
     for (;;)
     {
         char buffer[1024] = {0};
-        int len = recv(clientfd, buffer, 1024, 0);
+        int len = recv(clientfd, buffer, 1024, 0); // 阻塞了
         if (-1 == len || 0 == len)
         {
             close(clientfd);
@@ -497,7 +507,7 @@ void addgroup(int clientfd, std::string str)
     int groupid = atoi(str.c_str());
 
     json js;
-    js["msgid"] = EnMsgType::CREATE_GROUP_MSG;
+    js["msgid"] = EnMsgType::ADD_GROUP_MSG;
     js["id"] = g_currentUser.getId();
     js["groupid"] = groupid;
 

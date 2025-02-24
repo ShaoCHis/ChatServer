@@ -1,4 +1,5 @@
 #include "chatservice.hpp"
+#include <iostream>
 
 ChatService *ChatService::getInstance()
 {
@@ -85,7 +86,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
             json response;
             response["msgid"] = LOGIN_MSG_ACK;
             response["errno"] = 2;
-            response["errmsg"] = "该账号已经登陆，请重新输入新账号";
+            response["errmsg"] = "this id is already online,please change id!!!";
             conn->send(response.dump());
         }
         else
@@ -156,6 +157,8 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
                 return groupV;
             };
             response["groups"] = groupsInfo();
+            std::cout << response.dump().size() << std::endl;
+            std::cout << response.dump() << std::endl;
             conn->send(response.dump());
         }
     }
@@ -166,7 +169,7 @@ void ChatService::login(const TcpConnectionPtr &conn, json js, Timestamp time)
         json response;
         response["msgid"] = LOGIN_MSG_ACK;
         response["errno"] = 1;
-        response["errmsg"] = "用户名或者密码错误！";
+        response["errmsg"] = "the userid or password is wrong!";
         conn->send(response.dump());
     }
 }

@@ -9,7 +9,7 @@ class GroupUser : public User
 public:
     GroupUser() = default;
 
-    GroupUser(int id, std::string name, std::string state, std::string role) : User(id, name, state) { this->role = role; };
+    GroupUser(int id, std::string name, std::string state, std::string role) : User(id,name,"",state) { this->role = role; };
 
     void setRole(std::string role) { this->role = role; }
 
