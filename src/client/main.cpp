@@ -432,3 +432,22 @@ void chat(int clientfd,std::string str)
         std::cerr << "send chat msg error -> " << buffer << std::endl;
     }
 }
+
+
+// "creategroup" command handler
+void creategroup(int, std::string)
+{
+
+}
+
+// "addgroup" command handler
+void addgroup(int, std::string)
+{}
+
+// "groupchat" command handler
+void groupchat(int, std::string)
+{}
+
+// "quit" command handler
+void loginout(int, std::string)
+{}
