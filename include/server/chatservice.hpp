@@ -61,6 +61,9 @@ public:
     //群聊业务
     void groupChat(const TcpConnectionPtr &conn, json js, Timestamp time);
 
+    //处理注销业务
+    void loginout(const TcpConnectionPtr &conn, json js, Timestamp time);
+
     //获取消息对应的处理器
     MsgHandler getHandler(int msgid);
 
