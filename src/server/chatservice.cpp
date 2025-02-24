@@ -257,7 +257,6 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp tim
 {
     int groupId = js["groupid"].get<int>();
     int userId = js["userid"].get<int>();
-    std::string msg = js["msg"];
     std::vector<int> usersId = groupModel_.queryGroupUsers(userId, groupId);
 
     for (int id : usersId)
@@ -266,12 +265,12 @@ void ChatService::groupChat(const TcpConnectionPtr &conn, json js, Timestamp tim
         // 用户在线，发送消息
         if (userConnMap_.find(id) != userConnMap_.end())
         {
-            userConnMap_[id]->send(msg);
+            userConnMap_[id]->send(js.dump());
         }
         else
         {
             // 用户不在线，插入离线消息
-            offlineMsgModel_.insert(id, msg);
+            offlineMsgModel_.insert(id, js.dump());
         }
     }
 }
