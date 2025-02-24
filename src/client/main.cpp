@@ -254,7 +254,6 @@ int main(int argc, char **argv)
             break;
         }
         case 3:
-            loginout(clientfd, "loginout");
             close(clientfd);
             exit(0);
         default:
@@ -352,7 +351,7 @@ void addgroup(int, std::string);
 // "groupchat" command handler
 void groupchat(int, std::string);
 // "quit" command handler
-void loginout(int, std::string);
+void loginout(int, std::string = "");
 
 // 系统支持的客户端命令列表
 std::unordered_map<std::string, std::string> commandMap = {
