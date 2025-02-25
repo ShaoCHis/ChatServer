@@ -11,12 +11,21 @@ void resetHandler(int)
 }
 
 
-int main()
+int main(int argc,char **argv)
 {
+    if(argc<3)
+    {
+        std::cerr << "command invalid! example: ./ChatServer 127.0.0.1 6000" << std::endl;
+    }
+
+    //解析通过命令行参数传递的ip 和 port
+    char *ip = argv[1];
+    uint16_t port = atoi(argv[2]);
+
     signal(SIGINT,resetHandler);
 
     EventLoop loop;
-    InetAddress addr("127.0.0.1",6000);
+    InetAddress addr(ip,port);
     ChatServer chatServer(&loop,addr,"ChatServer");
 
     //启动聊天室
