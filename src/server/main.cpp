@@ -2,11 +2,13 @@
 #include "chatservice.hpp"
 #include <iostream>
 #include <signal.h>
+#include "coroutineEventPoll.hpp"
 
 //处理服务器 ctrl+c 结束后，重置user的状态信息
 void resetHandler(int)
 {
     ChatService::getInstance()->reset();
+    
     exit(0);
 }
 
